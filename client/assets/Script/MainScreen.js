@@ -35,27 +35,33 @@ cc.Class({
     },
 
     getMatchInfo(){
+        var self = this;
         this.unschedule(this.loadingCallback);
         this.loadingLabel.enabled = false;
         // 头像昵称
         this.headOther.active = true;
         this.PokerBackCenter.active = true;
         this.cards.active = true;
-
-        this.moveCards();
-
-        
-        
-        this.control.active = true;
        
+        this.net = require("Net");
+        this.net.ip = "ws://localhost:8888/game/";
+        this.net.connect(function(data){
+            self.moveCards();
+        }, function(data){
+            console.log("failed");
+        });
+    
     },
 
     moveCards(){
         //  移牌动作
+        self = this;
         this.PokerBackUp.active = true;
         this.PokerBackDown.active = true;
-        var upRestCardsLabel = this.PokerBackUp.getChildByName("restcard");
-        var downRestCardsLabel = this.PokerBackDown.getChildByName("restcard");
+        var upRestCardsLabel = this.PokerBackUp.getChildByName("restcard").getComponent(cc.Label);;
+        var downRestCardsLabel = this.PokerBackDown.getChildByName("restcard").getComponent(cc.Label);;
+        upRestCardsLabel.string = "0";
+        downRestCardsLabel.string = "0";
 
         var upPosition = this.PokerBackUp.getPosition();
         var downPosition = this.PokerBackDown.getPosition();
@@ -63,16 +69,20 @@ cc.Class({
         var moveToUp = cc.moveTo(0.1, upPosition);
         var moveToDown = cc.moveTo(0.1, downPosition);
         var moveUpFinished = cc.callFunc(function(target, upRestCardsLabel){
-            console.log(upRestCardsLabel.string);
             upRestCardsLabel.string =  (parseInt(upRestCardsLabel.string) + 1).toString();
         }, this, upRestCardsLabel); 
         var moveDownFinished = cc.callFunc(function(target, downRestCardsLabel){
             downRestCardsLabel.string =  (parseInt(downRestCardsLabel.string) + 1).toString();
         }, this, downRestCardsLabel); 
 
+        var moveCardsFinished = cc.callFunc(function(target){
+            target.destroy();
+            self.control.active = true;
+        },this);
+
         var sq = cc.sequence(cc.sequence(moveToUp, moveUpFinished), cc.sequence(moveToDown, moveDownFinished));
         var rp = cc.repeat(sq, 26);
-        this.PokerBackCenter.runAction(rp);
+        this.PokerBackCenter.runAction(cc.sequence(rp, moveCardsFinished));
     },
 
     update (dt) {
@@ -81,6 +91,8 @@ cc.Class({
 
     chuPai(){
         console.log("出牌");
+        this.net.send("xxx",{xxx:'ooo'});
+
     },
 
     shuttle(){
